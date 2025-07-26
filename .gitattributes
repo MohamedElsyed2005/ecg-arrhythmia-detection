@@ -1,0 +1,6 @@
+# Force LF endings for all text files
+*.py text eol=lf
+*.ipynb text eol=lf
+*.csv text eol=lf
+*.txt text eol=lf
+*.names text eol=lf
