@@ -25,3 +25,8 @@ Thumbs.db
 
 # Hidden git placeholders
 !.gitkeep
+
+# Ignore large ECG datasets
+data/Sudden Cardiac Death Holter Database.csv
+data/MIT-BIH Supraventricular Arrhythmia Database.csv
+data/INCART 2-lead Arrhythmia Database
