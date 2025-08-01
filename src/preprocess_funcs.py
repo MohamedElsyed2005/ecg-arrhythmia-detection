@@ -17,7 +17,9 @@ def rr_ratio_func(x):
 def qt_corrected_func(x):
     if isinstance(x, pd.DataFrame):
         x = x.to_numpy()
-    return x[:, [0]] / np.sqrt(x[:, [1]])
+    denom = np.sqrt(x[:, [1]])
+    denom[denom == 0] = 1e-6 
+    return np.divide(x[:, [0]], denom, out=np.zeros_like(x[:, [0]]), where=denom != 0)
 
 def beat_consistency_func(x):
     if isinstance(x, pd.DataFrame):
