@@ -4,6 +4,8 @@ import pandas as pd
 import os
 import joblib
 import sys
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Add src/ to the Python path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +43,79 @@ if st.button("Predict Beat Type"):
     input_array = np.array(user_input).reshape(1, -1)
     input_df = pd.DataFrame(input_array, columns=feature_names)
 
+    # Prediction
     prediction = model.predict(input_df)
     predicted_label = label_encoder.inverse_transform(prediction)[0]
     st.success(f"Predicted Beat Type: {predicted_label}")
+
+    # Probabilities
+    proba = model.predict_proba(input_df)[0]
+    class_labels = label_encoder.inverse_transform(np.arange(len(proba)))
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    explode = [0.07] * len(proba)
+
+    # Pie Chart with custom label positioning
+    fig, ax = plt.subplots(figsize=(9, 6))
+    wedges, texts = ax.pie(
+        proba,
+        labels=None,
+        colors=colors,
+        startangle=90,
+        explode=explode,
+        radius=1.0
+    )
+
+    for i, (w, p) in enumerate(zip(wedges, proba)):
+        ang = (w.theta2 + w.theta1) / 2.
+        angle_offset = 0
+        if i == 0:  # F
+            angle_offset = -0.15
+        elif i == 4:  # VEB
+            angle_offset = 0.15
+
+        x = np.cos(np.deg2rad(ang)) * 1.35
+        y = np.sin(np.deg2rad(ang)) * 1.35 + angle_offset
+
+        ax.text(
+            x, y, f"{p*100:.1f}%",
+            ha='center', va='center',
+            fontsize=12, weight='bold',
+            bbox=dict(facecolor='white', edgecolor='gray', boxstyle='round,pad=0.4')
+        )
+
+    ax.legend(
+        wedges,
+        class_labels,
+        title="Classes",
+        loc="center left",
+        bbox_to_anchor=(1, 0.5),
+        fontsize=12
+    )
+
+    fig.suptitle("Prediction Probabilities", fontsize=16, y=1.05)
+    ax.set_title("")
+    ax.axis('equal')
+    plt.tight_layout()
+    st.subheader("Prediction Probabilities")
+    st.pyplot(fig)
+
+    # Feature Importance
+    st.subheader("Feature Importance")
+
+    try:
+        importances = model.named_steps['classifier'].feature_importances_
+        n_importances = len(importances)
+        used_features = feature_names[:n_importances]
+
+        importance_df = pd.DataFrame({
+            'Feature': used_features,
+            'Importance': importances
+        }).sort_values(by="Importance", ascending=False).head(20)
+
+        fig2, ax2 = plt.subplots(figsize=(8, 6))
+        sns.barplot(data=importance_df, x='Importance', y='Feature', palette="viridis", ax=ax2)
+        ax2.set_title("Top 20 Important Features")
+        st.pyplot(fig2)
+
+    except Exception as e:
+        st.error(f"Could not compute feature importances: {e}")
